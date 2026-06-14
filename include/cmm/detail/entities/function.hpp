@@ -11,7 +11,7 @@
 namespace cmm {
 namespace detail {
 
-// Raw function pointer for dynamic dispatch. Zero overhead, no std::function bloat!
+// Raw function pointer for dynamic dispatch
 using InvokerFn = cmm::Error (*)(std::vector<Value>&, Value&);
 
 // Bitfield flags to save memory per function entity
@@ -22,10 +22,7 @@ struct FunctionFlags {
     bool is_destructor : 1 {false};
 };
 
-// Runtime representation of a function (free, member, static, constructor,
-// destructor). Stores enough static-reflection-derived metadata to answer
-// std::meta-style queries (parameters_of, return_type_of, parent_of, ...)
-// AND to perform type-checked dynamic invocation through its thunk.
+// Runtime representation of a function (free, member, static, constructor, destructor)
 class Function : public Entity {
 public:
     Function(std::string_view name,
@@ -41,7 +38,7 @@ public:
     }
 
     // Type-checked dynamic invocation. Writes the result into out and returns
-    // a cmm::Error describing the outcome (Success on success).
+    // a cmm::Error describing the outcome
     cmm::Error invoke(std::vector<Value>& args, Value& out) const {
         if (!thunk_) {
             return cmm::Error::ThunkNotInitialized;
@@ -83,9 +80,8 @@ private:
     cmm::info return_type_id_{cmm::invalid_info};
     std::vector<cmm::info> parameter_ids_;
 
-    // The type-erased invoker.
-    // For non-static member functions, the first Value in args should be
-    // the instance pointer (Class*). The thunk handles unpacking.
+    // The type-erased invoker. For non-static member functions, the 
+    //  first Value in args should be the instance pointer (Class*)
     InvokerFn thunk_{nullptr};
 };
 

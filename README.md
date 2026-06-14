@@ -7,3 +7,7 @@ CXX=g++-16 cmake -B build
 cmake --build build
 ./build/bin/basic_usage
 ```
+
+To add:
+- memory guidance
+- containers guidance
