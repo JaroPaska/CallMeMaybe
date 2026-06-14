@@ -10,9 +10,8 @@ target_include_directories(cmm INTERFACE
     $<INSTALL_INTERFACE:include>
 )
 
-target_compile_features(cmm INTERFACE cxx_std_26)
-
 target_compile_options(cmm INTERFACE
+    -std=c++26
     -freflection
     -fno-exceptions
     -fno-rtti
