@@ -118,8 +118,17 @@ public:
     }
 
 private:
+    // Transparent hash so callers can look up by std::string_view without
+    //  constructing a temporary std::string on every query
+    struct TransparentStringHash {
+        using is_transparent = void;
+        std::size_t operator()(std::string_view sv) const noexcept {
+            return std::hash<std::string_view>{}(sv);
+        }
+    };
+
     std::unordered_map<cmm::info, EntityVariant> entity_registry_;
-    std::unordered_map<std::string_view, cmm::info> top_level_entities_;
+    std::unordered_map<std::string, cmm::info, TransparentStringHash, std::equal_to<>> top_level_entities_;
 
     /*
     Type registrations
@@ -224,7 +233,7 @@ private:
         func.set_thunk(cmm::detail::create_thunk<FuncRefl>());
 
         entity_registry_.emplace(id, std::move(func));
-        top_level_entities_[std::meta::identifier_of(FuncRefl)] = id;
+        top_level_entities_.insert_or_assign(std::string(std::meta::identifier_of(FuncRefl)), id);
         return cmm::Error::Success;
     }
 
@@ -285,7 +294,7 @@ private:
         var.set_setter_thunk(&cmm::detail::StaticThunks<VarT>::set);
 
         entity_registry_.emplace(var_id, std::move(var));
-        top_level_entities_[std::meta::identifier_of(VarRefl)] = var_id;
+        top_level_entities_.insert_or_assign(std::string(std::meta::identifier_of(VarRefl)), var_id);
         return cmm::Error::Success;
     }
 
@@ -314,7 +323,7 @@ private:
             e.add_enumerator(enumerator_name, static_cast<std::int64_t>(val), enumerator_id);
         }
         
-        top_level_entities_[std::meta::display_string_of(EnumRefl)] = enum_id;
+        top_level_entities_.insert_or_assign(std::string(std::meta::display_string_of(EnumRefl)), enum_id);
         return cmm::Error::Success;
     }
 
@@ -410,7 +419,7 @@ private:
         }
 
         entity_registry_.insert_or_assign(class_id, std::move(cls));
-        top_level_entities_[std::meta::display_string_of(ClassRefl)] = class_id;
+        top_level_entities_.insert_or_assign(std::string(std::meta::display_string_of(ClassRefl)), class_id);
         
         return cmm::Error::Success;
     }
