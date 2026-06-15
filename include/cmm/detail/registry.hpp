@@ -92,7 +92,7 @@ public:
     }
 
     cmm::info get_id_by_name(std::string_view name) const {
-        if (auto it = top_level_entities_.find(std::string(name)); it != top_level_entities_.end()) {
+        if (auto it = top_level_entities_.find(name); it != top_level_entities_.end()) {
             return it->second;
         }
         return cmm::invalid_info;
@@ -119,7 +119,7 @@ public:
 
 private:
     std::unordered_map<cmm::info, EntityVariant> entity_registry_;
-    std::unordered_map<std::string, cmm::info> top_level_entities_;
+    std::unordered_map<std::string_view, cmm::info> top_level_entities_;
 
     /*
     Type registrations
@@ -224,7 +224,7 @@ private:
         func.set_thunk(cmm::detail::create_thunk<FuncRefl>());
 
         entity_registry_.emplace(id, std::move(func));
-        top_level_entities_[std::string(std::meta::identifier_of(FuncRefl))] = id;
+        top_level_entities_[std::meta::identifier_of(FuncRefl)] = id;
         return cmm::Error::Success;
     }
 
@@ -285,7 +285,7 @@ private:
         var.set_setter_thunk(&cmm::detail::StaticThunks<VarT>::set);
 
         entity_registry_.emplace(var_id, std::move(var));
-        top_level_entities_[std::string(std::meta::identifier_of(VarRefl))] = var_id;
+        top_level_entities_[std::meta::identifier_of(VarRefl)] = var_id;
         return cmm::Error::Success;
     }
 
@@ -314,7 +314,7 @@ private:
             e.add_enumerator(enumerator_name, static_cast<std::int64_t>(val), enumerator_id);
         }
         
-        top_level_entities_[std::string(std::meta::display_string_of(EnumRefl))] = enum_id;
+        top_level_entities_[std::meta::display_string_of(EnumRefl)] = enum_id;
         return cmm::Error::Success;
     }
 
@@ -338,6 +338,9 @@ private:
             }
 
             cmm::info member_id = cmm::detail::hash_entity(member);
+            if constexpr (std::meta::has_identifier(member)) {
+                cls.add_member_name(std::meta::identifier_of(member), member_id);
+            }
             CMM_REG_LOG(" Registering class member: " << std::meta::display_string_of(member) << "\n");
 
             if constexpr (std::meta::is_nonstatic_data_member(member)) {
@@ -407,7 +410,7 @@ private:
         }
 
         entity_registry_.insert_or_assign(class_id, std::move(cls));
-        top_level_entities_[std::string(std::meta::display_string_of(ClassRefl))] = class_id;
+        top_level_entities_[std::meta::display_string_of(ClassRefl)] = class_id;
         
         return cmm::Error::Success;
     }

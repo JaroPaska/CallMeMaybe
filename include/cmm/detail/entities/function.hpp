@@ -1,6 +1,7 @@
 #ifndef CALLMEMAYBE_FUNCTION_HPP
 #define CALLMEMAYBE_FUNCTION_HPP
 
+#include <span>
 #include <string_view>
 #include <vector>
 #include "cmm/error.hpp"
@@ -12,7 +13,7 @@ namespace cmm {
 namespace detail {
 
 // Raw function pointer for dynamic dispatch
-using InvokerFn = cmm::Error (*)(std::vector<Value>&, Value&);
+using InvokerFn = cmm::Error (*)(std::span<Value>, Value&);
 
 // Bitfield flags to save memory per function entity
 struct FunctionFlags {
@@ -39,7 +40,7 @@ public:
 
     // Type-checked dynamic invocation. Writes the result into out and returns
     // a cmm::Error describing the outcome
-    cmm::Error invoke(std::vector<Value>& args, Value& out) const {
+    cmm::Error invoke(std::span<Value> args, Value& out) const {
         if (!thunk_) {
             return cmm::Error::ThunkNotInitialized;
         }

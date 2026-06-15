@@ -22,7 +22,7 @@ namespace cmm {
 namespace detail {
 
 // Small Buffer Optimization metrics
-inline constexpr std::size_t SBO_SIZE = 24;
+inline constexpr std::size_t SBO_SIZE = 32;
 inline constexpr std::size_t SBO_ALIGN = alignof(std::max_align_t);
 
 template <typename T>

@@ -1,5 +1,6 @@
 //g++-16 -std=c++26 -freflection -fno-exceptions -fno-rtti -I include basic_usage.cpp -o basic_usage
 
+#include <array>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -193,13 +194,14 @@ void test_enums() {
 void test_error_handling() {
     std::cout << "\nTest 6: Graceful Error Handling\n";
 
-    // 1. Setup a valid instance via safe invocation
+    // Setup a valid instance via safe invocation
     cmm::info p_id = cmm::reflect_name("Player");
     cmm::info ctor_id = cmm::lookup::get_constructor<std::string, int>(p_id);
     cmm::info greet_id = cmm::lookup::get_member(p_id, "greet");
 
     cmm::Value player_val;
-    cmm::Error err = cmm::reflect_invoke(ctor_id, {cmm::Value(std::string("ErrorTester")), cmm::Value(10)}, player_val);
+    std::array<cmm::Value, 2> ctor_args{ cmm::Value(std::string("ErrorTester")), cmm::Value(10) };
+    cmm::Error err = cmm::reflect_invoke(ctor_id, ctor_args, player_val);
     
     if (err != cmm::Error::Success) {
         std::cout << "  Failed to setup test: " << cmm::to_string(err) << "\n";
@@ -211,13 +213,15 @@ void test_error_handling() {
     // Test Invalid Argument Count
     std::cout << "  Testing Invalid Argument Count...\n";
     // greet() requires (Instance*, const std::string&). We are skipping the string argument.
-    err = cmm::reflect_invoke(greet_id, {player_val}, result); 
+    std::array<cmm::Value, 1> too_few_args{ player_val };
+    err = cmm::reflect_invoke(greet_id, too_few_args, result); 
     std::cout << "    Expected error, got: " << cmm::to_string(err) << "\n";
 
     // Test Invalid Argument Type
     std::cout << "  Testing Invalid Argument Type...\n";
     // Passing an int instead of a std::string to greet()
-    err = cmm::reflect_invoke(greet_id, {player_val, cmm::Value(42)}, result);
+    std::array<cmm::Value, 2> wrong_type_args{ player_val, cmm::Value(42) };
+    err = cmm::reflect_invoke(greet_id, wrong_type_args, result);
     std::cout << "    Expected error, got: " << cmm::to_string(err) << "\n";
 
     // Test Not Invocable Entity

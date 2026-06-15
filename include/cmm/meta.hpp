@@ -1,9 +1,11 @@
 #ifndef CALLMEMAYBE_META_HPP
 #define CALLMEMAYBE_META_HPP
 
+#include <array>
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <span>
 #include <string_view>
 #include <type_traits>
 #include <variant>
@@ -320,7 +322,7 @@ Invocation (Mirroring std::meta::reflect_invoke)
 // Base invocation function. Takes a pre-packaged vector of Values and writes
 // the result into out. Works for Functions, Methods (where args[0] is
 // Instance*), and Constructors. Returns a cmm::Error saying the outcome
-inline cmm::Error reflect_invoke(cmm::info target, std::vector<Value> args, Value& out) {
+inline cmm::Error reflect_invoke(cmm::info target, std::span<Value> args, Value& out) {
     if (!detail::valid(target)) {
         return cmm::Error::EntityNotFound;
     }
@@ -336,12 +338,17 @@ inline cmm::Error reflect_invoke(cmm::info target, std::vector<Value> args, Valu
 // to inspect the cmm::Error
 template <typename Ret = Value, typename... Args>
 inline auto invoke(cmm::info target, Args&&... args) {
-    std::vector<Value> vals;
-    vals.reserve(sizeof...(Args));
-    (vals.emplace_back(std::forward<Args>(args)), ...);
-
     Value result;
-    cmm::Error err = reflect_invoke(target, std::move(vals), result);
+    cmm::Error err;
+
+    if constexpr (sizeof...(Args) > 0) {
+        std::array<Value, sizeof...(Args)> vals{ Value(std::forward<Args>(args))... };
+        err = reflect_invoke(target, vals, result);
+    } else {
+        // Fast path for zero-argument functions
+        err = reflect_invoke(target, {}, result);
+    }
+
     assert(err == cmm::Error::Success && "cmm::invoke failed; use reflect_invoke to inspect the cmm::Error");
     (void)err;
 
@@ -362,11 +369,13 @@ when working with string names and such
 */
 namespace lookup {
 
-// Finds the first member function matching the name.
-// For overloads, users should iterate members_of directly.
+// Works for members with unique identifiers, otherwise use members_of directly
 inline cmm::info get_member(cmm::info class_id, std::string_view name) {
-    for (cmm::info m : members_of(class_id)) {
-        if (identifier_of(m) == name) return m;
+    if (!detail::valid(class_id)) return invalid_info;
+    auto& entity = detail::Registry::instance().get_entity(class_id);
+    
+    if (auto* cls = std::get_if<detail::Class>(&entity)) {
+        return cls->get_member_by_name(name);
     }
     return invalid_info;
 }

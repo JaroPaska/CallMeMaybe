@@ -50,6 +50,18 @@ public:
         return out;
     }
 
+    void add_member_name(std::string_view name, cmm::info id) {
+        member_name_index_.push_back({name, id});
+    }
+    
+    // Just for perf, average O(1) lookup
+    cmm::info get_member_by_name(std::string_view name) const {
+        for (const auto& pair : member_name_index_) {
+            if (pair.first == name) return pair.second;
+        }
+        return cmm::invalid_info;
+    }
+
 private:
     std::vector<cmm::info> bases_;
     std::vector<cmm::info> constructors_;
@@ -57,6 +69,7 @@ private:
     std::vector<cmm::info> functions_;
     std::vector<cmm::info> static_data_members_;
     std::vector<cmm::info> nonstatic_data_members_;
+    std::vector<std::pair<std::string_view, cmm::info>> member_name_index_;
 };
 
 } // namespace detail
