@@ -13,7 +13,7 @@ CallMeMaybe (CMM) is a C++ runtime reflection library built on top of [P2996](ht
 The library is available in the `include/cmm/` directory. To use it, copy `include/cmm` into your project and `#include "cmm/meta.hpp"`. A full example showing different scenarios (dynamic invocation, global variable modification, property iteration, and enums) can be found in `examples/basic_usage.cpp`. To use CMM:
 
 1. **Tag your class**: Mark the methods, members, or constructors you want available at runtime with the `[[=cmm::reflectable]]` annotation. Unannotated members are ignored.
-2. **Register the entity**: At startup, register your types into the global runtime registry using `cmm::register_rrefl<^^Type>()`.
+2. **Register the entity**: At namespace scope in one translation unit, register your types into the global runtime registry using `CMM_BUILD_REGISTRY(^^Type, ...)`.
 3. **Reflect and Invoke**: Look up entities by string, dynamically instantiate them, and invoke their methods.
 
 ### Example 1
@@ -42,10 +42,9 @@ private:
     [[=cmm::reflectable]] int age_;
 };
 
-int main() {
-    // Register the class into the global runtime registry
-    cmm::register_rrefl<^^Player>();
+CMM_BUILD_REGISTRY(^^Player);
 
+int main() {
     cmm::info p_id = cmm::reflect_name("Player");
     cmm::info ctor_id = cmm::lookup::get_constructor<std::string, int>(p_id); 
     cmm::Value player_val = cmm::invoke(ctor_id, std::string("Alice"), 25);
@@ -82,8 +81,9 @@ private:
     int cache_hash_ = 0; 
 };
 
+CMM_BUILD_REGISTRY(^^Player);
+
 int main() {
-    cmm::register_rrefl<^^Player>();
     cmm::info p_id = cmm::reflect_name("Player");
     std::cout << "Iterating properties of Player...\n";
 

@@ -3,7 +3,6 @@
 
 #include <span>
 #include <string_view>
-#include <vector>
 #include "cmm/error.hpp"
 #include "cmm/info.hpp"
 #include "cmm/detail/entities/entity.hpp"
@@ -26,7 +25,7 @@ struct FunctionFlags {
 // Runtime representation of a function (free, member, static, constructor, destructor)
 class Function : public Entity {
 public:
-    Function(std::string_view name,
+    constexpr Function(std::string_view name,
              bool is_member_function = false,
              bool is_static_function = false)
         : Entity(name) {
@@ -34,7 +33,7 @@ public:
         flags_.is_static_function = is_static_function;
     }
 
-    void set_thunk(InvokerFn thunk) {
+    constexpr void set_thunk(InvokerFn thunk) {
         thunk_ = thunk;
     }
 
@@ -48,25 +47,25 @@ public:
     }
 
     // Setters
-    void set_is_member_function(bool v) { flags_.is_member_function = v; }
-    void set_is_static_function(bool v) { flags_.is_static_function = v; }
-    void set_is_constructor(bool v) { flags_.is_constructor = v; }
-    void set_is_destructor(bool v) { flags_.is_destructor = v; }
+    constexpr void set_is_member_function(bool v) { flags_.is_member_function = v; }
+    constexpr void set_is_static_function(bool v) { flags_.is_static_function = v; }
+    constexpr void set_is_constructor(bool v) { flags_.is_constructor = v; }
+    constexpr void set_is_destructor(bool v) { flags_.is_destructor = v; }
 
-    void set_parent_id(cmm::info id) { parent_id_ = id; }
-    void set_return_type_id(cmm::info id) { return_type_id_ = id; }
-    void add_parameter_id(cmm::info id) { parameter_ids_.push_back(id); }
+    constexpr void set_parent_id(cmm::info id) { parent_id_ = id; }
+    constexpr void set_return_type_id(cmm::info id) { return_type_id_ = id; }
+    constexpr void set_parameter_ids(std::span<const cmm::info> ids) { parameter_ids_ = ids; }
 
     // Getters
-    bool is_member_function() const { return flags_.is_member_function; }
-    bool is_static_function() const { return flags_.is_static_function; }
-    bool is_constructor() const { return flags_.is_constructor; }
-    bool is_destructor() const { return flags_.is_destructor; }
-    const FunctionFlags& flags() const { return flags_; }
+    constexpr bool is_member_function() const { return flags_.is_member_function; }
+    constexpr bool is_static_function() const { return flags_.is_static_function; }
+    constexpr bool is_constructor() const { return flags_.is_constructor; }
+    constexpr bool is_destructor() const { return flags_.is_destructor; }
+    constexpr const FunctionFlags& flags() const { return flags_; }
 
-    cmm::info parent_id() const { return parent_id_; }
-    cmm::info return_type_id() const { return return_type_id_; }
-    const std::vector<cmm::info>& parameter_ids() const { return parameter_ids_; }
+    constexpr cmm::info parent_id() const { return parent_id_; }
+    constexpr cmm::info return_type_id() const { return return_type_id_; }
+    constexpr std::span<const cmm::info> parameter_ids() const { return parameter_ids_; }
 
 private:
     FunctionFlags flags_{};
@@ -79,7 +78,7 @@ private:
     // Type for the return type; parameter_ids_ holds Parameter info
     // ids in declaration order (each Parameter then has its own type_id).
     cmm::info return_type_id_{cmm::invalid_info};
-    std::vector<cmm::info> parameter_ids_;
+    std::span<const cmm::info> parameter_ids_;
 
     // The type-erased invoker. For non-static member functions, the 
     //  first Value in args should be the instance pointer (Class*)

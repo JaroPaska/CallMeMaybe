@@ -240,27 +240,20 @@ void test_error_handling() {
     delete player_val.get<Player*>();
 }
 
+CMM_BUILD_REGISTRY(
+    ^^Player,
+    ^^int,
+    ^^random_function,
+    ^^add,
+    ^^random_struct,
+    ^^name1::Player,
+    ^^name2::Player,
+    ^^PlayerStatus,
+    ^^g_max_players
+);
+
 int main() {
     std::cout << "CallMeMaybe Reflection Test\n";
-
-    // cmm::register_rrefl<^^std>();  <- error: Requires clause fails, std is not registerable
-
-    std::cout << "\nRegistering Entities into Global Registry\n";
-    
-    // Check if the registry returns Success (it should)
-    cmm::Error status = cmm::register_rrefl<^^Player>();
-    if (status != cmm::Error::Success) {
-        std::cout << "Failed to register Player class!\n";
-    }
-
-    cmm::register_rrefl<^^int>();
-    cmm::register_rrefl<^^random_function>();
-    cmm::register_rrefl<^^add>();
-    cmm::register_rrefl<^^random_struct>();
-    cmm::register_rrefl<^^name1::Player>();
-    cmm::register_rrefl<^^name2::Player>();
-    cmm::register_rrefl<^^PlayerStatus>();
-    cmm::register_rrefl<^^g_max_players>();
 
     test_top_level_lookup();
     test_dynamic_instantiation_and_invocation();

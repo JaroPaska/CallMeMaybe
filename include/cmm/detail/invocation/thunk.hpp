@@ -85,7 +85,7 @@ struct StaticThunks {
 
 // Generates a thunk for both free functions and member functions
 template <std::meta::info FuncRefl>
-InvokerFn create_thunk() {
+consteval InvokerFn create_thunk() {
     return [](std::span<Value> args, Value& out) -> cmm::Error {
         static constexpr auto params = std::define_static_array(std::meta::parameters_of(FuncRefl));
         constexpr std::size_t num_params = params.size();
@@ -141,7 +141,7 @@ InvokerFn create_thunk() {
 // Generates a thunk specifically for constructors
 // It's special because it has to allocate a new instance and return it
 template <std::meta::info ConstructorRefl>
-InvokerFn create_constructor_thunk() {
+consteval InvokerFn create_constructor_thunk() {
     return [](std::span<Value> args, Value& out) -> cmm::Error {
         static constexpr auto params = std::define_static_array(std::meta::parameters_of(ConstructorRefl));
         constexpr std::size_t num_params = params.size();

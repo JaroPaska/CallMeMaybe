@@ -3,7 +3,6 @@
 
 #include <cstdint>
 #include <string_view>
-#include <vector>
 #include "cmm/info.hpp"
 #include "cmm/detail/entities/entity.hpp"
 #include "cmm/detail/entities/type.hpp"
@@ -15,14 +14,14 @@ namespace detail {
 // Inherits from Entity because it has a value and name, but isn't a type itself
 class Enumerator : public Entity {
 public:
-    Enumerator(std::string_view name, std::int64_t value)
+    constexpr Enumerator(std::string_view name, std::int64_t value)
         : Entity(name), value_(value) {}
 
-    std::int64_t value() const { return value_; }
-    cmm::info parent_id() const { return parent_id_; }
+    constexpr std::int64_t value() const { return value_; }
+    constexpr cmm::info parent_id() const { return parent_id_; }
 
-    void set_value(std::int64_t v) { value_ = v; }
-    void set_parent_id(cmm::info id) { parent_id_ = id; }
+    constexpr void set_value(std::int64_t v) { value_ = v; }
+    constexpr void set_parent_id(cmm::info id) { parent_id_ = id; }
 
 private:
     std::int64_t value_{0};

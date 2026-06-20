@@ -24,7 +24,7 @@ using StaticSetterFn = cmm::Error (*)(void* address, const Value& value);
 // A class data member (static or non-static).
 class DataMember : public Entity {
 public:
-    DataMember(std::string_view name, bool is_static = false)
+    constexpr DataMember(std::string_view name, bool is_static = false)
         : Entity(name), is_static_(is_static) {}
 
     /*
@@ -92,29 +92,29 @@ public:
     Accessors & Mutators
     */
 
-    cmm::info type_id() const { return type_id_; }
-    cmm::info parent_id() const { return parent_id_; }
-    std::ptrdiff_t offset_bytes() const { return offset_bytes_; }
-    std::ptrdiff_t offset_bits() const { return offset_bits_; }
-    bool is_static() const { return is_static_; }
-    bool is_bit_field() const { return is_bit_field_; }
-    void* address() const { return address_; }
+    constexpr cmm::info type_id() const { return type_id_; }
+    constexpr cmm::info parent_id() const { return parent_id_; }
+    constexpr std::ptrdiff_t offset_bytes() const { return offset_bytes_; }
+    constexpr std::ptrdiff_t offset_bits() const { return offset_bits_; }
+    constexpr bool is_static() const { return is_static_; }
+    constexpr bool is_bit_field() const { return is_bit_field_; }
+    constexpr void* address() const { return address_; }
 
-    void set_type_id(cmm::info id) { type_id_ = id; }
-    void set_parent_id(cmm::info id) { parent_id_ = id; }
-    void set_offset_bytes(std::ptrdiff_t o) { offset_bytes_ = o; }
-    void set_offset_bits(std::ptrdiff_t o) { offset_bits_ = o; }
-    void set_is_static(bool v) { is_static_ = v; }
-    void set_is_bit_field(bool v) { is_bit_field_ = v; }
-    void set_address(void* ptr) { address_ = ptr; }
+    constexpr void set_type_id(cmm::info id) { type_id_ = id; }
+    constexpr void set_parent_id(cmm::info id) { parent_id_ = id; }
+    constexpr void set_offset_bytes(std::ptrdiff_t o) { offset_bytes_ = o; }
+    constexpr void set_offset_bits(std::ptrdiff_t o) { offset_bits_ = o; }
+    constexpr void set_is_static(bool v) { is_static_ = v; }
+    constexpr void set_is_bit_field(bool v) { is_bit_field_ = v; }
+    constexpr void set_address(void* ptr) { address_ = ptr; }
 
-    void set_getter_thunk(PropertyGetterFn fn) { getter_ = fn; }
-    void set_ref_getter_thunk(PropertyRefGetterFn fn) { ref_getter_ = fn; }
-    void set_setter_thunk(PropertySetterFn fn) { setter_ = fn; }
+    constexpr void set_getter_thunk(PropertyGetterFn fn) { getter_ = fn; }
+    constexpr void set_ref_getter_thunk(PropertyRefGetterFn fn) { ref_getter_ = fn; }
+    constexpr void set_setter_thunk(PropertySetterFn fn) { setter_ = fn; }
 
-    void set_static_getter_thunk(StaticGetterFn fn) { static_getter_ = fn; }
-    void set_static_ref_getter_thunk(StaticRefGetterFn fn) { static_ref_getter_ = fn; }
-    void set_static_setter_thunk(StaticSetterFn fn) { static_setter_ = fn; }
+    constexpr void set_static_getter_thunk(StaticGetterFn fn) { static_getter_ = fn; }
+    constexpr void set_static_ref_getter_thunk(StaticRefGetterFn fn) { static_ref_getter_ = fn; }
+    constexpr void set_static_setter_thunk(StaticSetterFn fn) { static_setter_ = fn; }
 
 private:
     cmm::info type_id_{cmm::invalid_info};

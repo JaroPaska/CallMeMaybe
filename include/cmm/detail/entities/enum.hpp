@@ -2,8 +2,8 @@
 #define CALLMEMAYBE_ENUM_HPP
 
 #include <cstdint>
+#include <span>
 #include <string_view>
-#include <vector>
 #include "cmm/info.hpp"
 #include "cmm/detail/entities/entity.hpp"
 #include "cmm/detail/entities/type.hpp"
@@ -21,15 +21,13 @@ public:
         cmm::info entity_id; // Link back to the Enumerator in the global registry
     };
 
-    explicit Enum(std::string_view name) : Type(name) {
+    constexpr explicit Enum(std::string_view name) : Type(name) {
         flags_.is_enum = true; 
     }
 
-    void add_enumerator(std::string_view name, std::int64_t value, cmm::info entity_id) {
-        enumerators_.push_back({name, value, entity_id});
-    }
+    constexpr void set_enumerators(std::span<const Entry> s) { enumerators_ = s; }
 
-    const std::vector<Entry>& enumerators() const { return enumerators_; }
+    constexpr std::span<const Entry> enumerators() const { return enumerators_; }
 
     /*
     Runtime Reflection Fast-Paths
@@ -55,7 +53,7 @@ public:
     }
 
 private:
-    std::vector<Entry> enumerators_;
+    std::span<const Entry> enumerators_;
 };
 
 } // namespace detail

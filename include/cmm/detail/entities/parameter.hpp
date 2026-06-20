@@ -12,7 +12,7 @@ namespace detail {
 // Function arguments
 class Parameter : public Entity {
 public:
-    Parameter(std::string_view name,
+    constexpr Parameter(std::string_view name,
                  cmm::info type_id,
                  cmm::info parent_id,
                  std::size_t index)
@@ -21,17 +21,17 @@ public:
           parent_id_(parent_id),
           index_(index) {}
 
-    cmm::info type_id() const { return type_id_; }
-    cmm::info parent_id() const { return parent_id_; }
-    std::size_t index() const { return index_; }
+    constexpr cmm::info type_id() const { return type_id_; }
+    constexpr cmm::info parent_id() const { return parent_id_; }
+    constexpr std::size_t index() const { return index_; }
     
-    bool has_identifier() const { return !name_.empty(); }
+    constexpr bool has_identifier() const { return !name_.empty(); }
 
     // Decayed (remove_cvref) ID of the parameter's type. Matches the ID a
     // Value reports for an argument, so overload / constructor resolution can
     // compare argument values against parameters safely
-    cmm::info decayed_type_id() const { return decayed_type_id_; }
-    void set_decayed_type_id(cmm::info id) { decayed_type_id_ = id; }
+    constexpr cmm::info decayed_type_id() const { return decayed_type_id_; }
+    constexpr void set_decayed_type_id(cmm::info id) { decayed_type_id_ = id; }
 
 private:
     cmm::info type_id_{cmm::invalid_info};

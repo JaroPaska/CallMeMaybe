@@ -34,34 +34,41 @@ consteval cmm::info get_id() {
     return detail::hash_entity(EntityRefl);
 }
 
-// Registers a top-level entity into the global runtime reflection registry.
-// Recursively registers any types referenced by that entity. Could be parameter
-// types, return type, data member types, etc...
-template <std::meta::info EntityRefl>
-inline cmm::Error register_rrefl() {
-    return detail::Registry::instance().register_entity<EntityRefl>();
-}
+/*
+Internal Helpers
+*/
+namespace detail {
+    // Defined by CMM_BUILD_REGISTRY in exactly one translation unit.
+    extern const RegistryView g_active_registry;
+
+    inline const RegistryView& registry() { return g_active_registry; }
+
+    inline bool valid(cmm::info i) {
+        return i != invalid_info && registry().contains(i);
+    }
+
+    template <typename Visitor>
+    inline auto visit_entity(cmm::info i, Visitor&& v) {
+        return std::visit(std::forward<Visitor>(v), registry().get_entity(i));
+    }
+} // namespace detail
+
+// Builds a constexpr registry from a list of reflections and defines the global registry.
+// Use once at namespace scope in exactly one translation unit:
+//   CMM_BUILD_REGISTRY(^^MyType, ^^AnotherType, ...);
+// TODO: consider accepting plain names (CMM_BUILD_REGISTRY(MyType, ...)) and prepending ^^ in the macro expansion.
+#define CMM_BUILD_REGISTRY(...)                                                      \
+    static constexpr auto cmm_registry_data_ =                                      \
+        cmm::detail::build_registry<__VA_ARGS__>();                                  \
+    constexpr cmm::detail::RegistryView cmm::detail::g_active_registry {            \
+        cmm_registry_data_ }
 
 // Top-level entity lookup by name from the registry. Gotta have this, but it's like the
 // equivalent for ^^ for reflecting the first entity. After this, callers can use
 // the info handle for getting other entities and such.
 inline cmm::info reflect_name(std::string_view name) {
-    return detail::Registry::instance().get_id_by_name(name);
+    return detail::registry().get_id_by_name(name);
 }
-
-/*
-Internal Helpers
-*/
-namespace detail {
-    inline bool valid(cmm::info i) {
-        return i != invalid_info && Registry::instance().contains(i);
-    }
-
-    template <typename Visitor>
-    inline auto visit_entity(cmm::info i, Visitor&& v) {
-        return std::visit(std::forward<Visitor>(v), Registry::instance().get_entity(i));
-    }
-} // namespace detail
 
 
 /*
@@ -70,7 +77,7 @@ Naming and Source-level Queries
 
 inline std::string_view identifier_of(cmm::info i) {
     if (!detail::valid(i)) return {};
-    return detail::Registry::instance().get_entity_name(i);
+    return detail::registry().get_entity_name(i);
 }
 
 inline std::string_view display_string_of(cmm::info i) {
@@ -131,37 +138,37 @@ inline cmm::info underlying_type(cmm::info i) {
 Class and Enum Structure Queries
 */
 
-inline std::vector<cmm::info> members_of(cmm::info i) {
+inline std::span<const cmm::info> members_of(cmm::info i) {
     if (!detail::valid(i)) return {};
-    auto& entity = detail::Registry::instance().get_entity(i);
+    const auto& entity = detail::registry().get_entity(i);
     if (auto* cls = std::get_if<detail::Class>(&entity)) return cls->members();
     return {};
 }
 
-inline std::vector<cmm::info> nonstatic_data_members_of(cmm::info i) {
+inline std::span<const cmm::info> nonstatic_data_members_of(cmm::info i) {
     if (!detail::valid(i)) return {};
-    auto& entity = detail::Registry::instance().get_entity(i);
+    const auto& entity = detail::registry().get_entity(i);
     if (auto* cls = std::get_if<detail::Class>(&entity)) return cls->nonstatic_data_members();
     return {};
 }
 
-inline std::vector<cmm::info> static_data_members_of(cmm::info i) {
+inline std::span<const cmm::info> static_data_members_of(cmm::info i) {
     if (!detail::valid(i)) return {};
-    auto& entity = detail::Registry::instance().get_entity(i);
+    const auto& entity = detail::registry().get_entity(i);
     if (auto* cls = std::get_if<detail::Class>(&entity)) return cls->static_data_members();
     return {};
 }
 
-inline std::vector<cmm::info> bases_of(cmm::info i) {
+inline std::span<const cmm::info> bases_of(cmm::info i) {
     if (!detail::valid(i)) return {};
-    auto& entity = detail::Registry::instance().get_entity(i);
+    const auto& entity = detail::registry().get_entity(i);
     if (auto* cls = std::get_if<detail::Class>(&entity)) return cls->bases();
     return {};
 }
 
 inline std::vector<cmm::info> enumerators_of(cmm::info i) {
     if (!detail::valid(i)) return {};
-    auto& entity = detail::Registry::instance().get_entity(i);
+    const auto& entity = detail::registry().get_entity(i);
     if (auto* e = std::get_if<detail::Enum>(&entity)) {
         std::vector<cmm::info> result;
         result.reserve(e->enumerators().size());
@@ -175,7 +182,7 @@ inline std::vector<cmm::info> enumerators_of(cmm::info i) {
 
 inline void* address_of(cmm::info i) {
     if (!detail::valid(i)) return nullptr;
-    auto& entity = detail::Registry::instance().get_entity(i);
+    const auto& entity = detail::registry().get_entity(i);
     if (auto* var = std::get_if<detail::Variable>(&entity)) return var->address();
     return nullptr;
 }
@@ -183,7 +190,7 @@ inline void* address_of(cmm::info i) {
 // Extracts the underlying integer value of a specific Enumerator ID
 inline std::int64_t value_of(cmm::info i) {
     if (!detail::valid(i)) return 0;
-    auto& entity = detail::Registry::instance().get_entity(i);
+    const auto& entity = detail::registry().get_entity(i);
     if (auto* enumerator = std::get_if<detail::Enumerator>(&entity)) {
         return enumerator->value();
     }
@@ -194,16 +201,16 @@ inline std::int64_t value_of(cmm::info i) {
 Function Queries
 */
 
-inline std::vector<cmm::info> parameters_of(cmm::info i) {
+inline std::span<const cmm::info> parameters_of(cmm::info i) {
     if (!detail::valid(i)) return {};
-    auto& entity = detail::Registry::instance().get_entity(i);
+    const auto& entity = detail::registry().get_entity(i);
     if (auto* func = std::get_if<detail::Function>(&entity)) return func->parameter_ids();
     return {};
 }
 
 inline cmm::info return_type_of(cmm::info i) {
     if (!detail::valid(i)) return invalid_info;
-    auto& entity = detail::Registry::instance().get_entity(i);
+    const auto& entity = detail::registry().get_entity(i);
     if (auto* func = std::get_if<detail::Function>(&entity)) return func->return_type_id();
     return invalid_info;
 }
@@ -232,7 +239,7 @@ inline std::size_t alignment_of(cmm::info i) {
 
 inline std::size_t offset_of(cmm::info i) {
     if (!detail::valid(i)) return 0;
-    auto& entity = detail::Registry::instance().get_entity(i);
+    const auto& entity = detail::registry().get_entity(i);
     if (auto* dm = std::get_if<detail::DataMember>(&entity)) return dm->offset_bytes();
     return 0;
 }
@@ -243,17 +250,17 @@ Predicates (Mirroring std::meta::is_*)
 
 inline bool is_function(cmm::info i) {
     if (!detail::valid(i)) return false;
-    return std::holds_alternative<detail::Function>(detail::Registry::instance().get_entity(i));
+    return std::holds_alternative<detail::Function>(detail::registry().get_entity(i));
 }
 
 inline bool is_constructor(cmm::info i) {
     if (!is_function(i)) return false;
-    return std::get<detail::Function>(detail::Registry::instance().get_entity(i)).is_constructor();
+    return std::get<detail::Function>(detail::registry().get_entity(i)).is_constructor();
 }
 
 inline bool is_destructor(cmm::info i) {
     if (!is_function(i)) return false;
-    return std::get<detail::Function>(detail::Registry::instance().get_entity(i)).is_destructor();
+    return std::get<detail::Function>(detail::registry().get_entity(i)).is_destructor();
 }
 
 inline bool is_static_member(cmm::info i) {
@@ -268,14 +275,14 @@ inline bool is_static_member(cmm::info i) {
 
 inline bool is_nonstatic_data_member(cmm::info i) {
     if (!detail::valid(i)) return false;
-    auto& e = detail::Registry::instance().get_entity(i);
+    const auto& e = detail::registry().get_entity(i);
     if (auto* dm = std::get_if<detail::DataMember>(&e)) return !dm->is_static();
     return false;
 }
 
 inline bool is_enumerator(cmm::info i) {
     if (!detail::valid(i)) return false;
-    return std::holds_alternative<detail::Enumerator>(detail::Registry::instance().get_entity(i));
+    return std::holds_alternative<detail::Enumerator>(detail::registry().get_entity(i));
 }
 
 // Macro to quickly generate Type property predicates
@@ -326,7 +333,7 @@ inline cmm::Error reflect_invoke(cmm::info target, std::span<Value> args, Value&
     if (!detail::valid(target)) {
         return cmm::Error::EntityNotFound;
     }
-    auto& entity = detail::Registry::instance().get_entity(target);
+    const auto& entity = detail::registry().get_entity(target);
     if (auto* func = std::get_if<detail::Function>(&entity)) {
         return func->invoke(args, out);
     }
@@ -372,7 +379,7 @@ namespace lookup {
 // Works for members with unique identifiers, otherwise use members_of directly
 inline cmm::info get_member(cmm::info class_id, std::string_view name) {
     if (!detail::valid(class_id)) return invalid_info;
-    auto& entity = detail::Registry::instance().get_entity(class_id);
+    const auto& entity = detail::registry().get_entity(class_id);
     
     if (auto* cls = std::get_if<detail::Class>(&entity)) {
         return cls->get_member_by_name(name);
@@ -409,7 +416,7 @@ inline cmm::info get_constructor(cmm::info class_id) {
 // Converts an integer runtime value into its enum string name
 inline std::string_view enum_to_string(cmm::info enum_type_id, std::int64_t value) {
     if (!detail::valid(enum_type_id)) return {};
-    auto& entity = detail::Registry::instance().get_entity(enum_type_id);
+    const auto& entity = detail::registry().get_entity(enum_type_id);
     if (auto* e = std::get_if<detail::Enum>(&entity)) {
         return e->get_name_by_value(value);
     }
@@ -419,7 +426,7 @@ inline std::string_view enum_to_string(cmm::info enum_type_id, std::int64_t valu
 // Converts a string name back into the integer runtime enum value
 inline bool string_to_enum(cmm::info enum_type_id, std::string_view name, std::int64_t& out_value) {
     if (!detail::valid(enum_type_id)) return false;
-    auto& entity = detail::Registry::instance().get_entity(enum_type_id);
+    const auto& entity = detail::registry().get_entity(enum_type_id);
     if (auto* e = std::get_if<detail::Enum>(&entity)) {
         return e->get_value_by_name(name, out_value);
     }

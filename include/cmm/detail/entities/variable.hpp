@@ -21,7 +21,7 @@ using VariableSetterFn = cmm::Error (*)(void* address, const Value& value);
 // so it inherits directly from Entity.
 class Variable : public Entity {
 public:
-    Variable(std::string_view name, cmm::info type_id)
+    constexpr Variable(std::string_view name, cmm::info type_id)
         : Entity(name), type_id_(type_id) {}
 
     /*
@@ -58,26 +58,26 @@ public:
     Accessors & Mutators
     */
 
-    cmm::info type_id() const { return type_id_; }
+    constexpr cmm::info type_id() const { return type_id_; }
 
     // Absolute memory address of the global variable
-    void* address() const { return address_; }
-    void set_address(void* ptr) { address_ = ptr; }
+    constexpr void* address() const { return address_; }
+    constexpr void set_address(void* ptr) { address_ = ptr; }
 
     // Constness tracking is important to prevent the runtime 
     // library from attempting to write to read-only memory segments
-    bool is_const() const { return is_const_; }
-    void set_is_const(bool c) { is_const_ = c; }
+    constexpr bool is_const() const { return is_const_; }
+    constexpr void set_is_const(bool c) { is_const_ = c; }
 
-    bool is_constexpr() const { return is_constexpr_; }
-    void set_is_constexpr(bool ce) { is_constexpr_ = ce; }
+    constexpr bool is_constexpr() const { return is_constexpr_; }
+    constexpr void set_is_constexpr(bool ce) { is_constexpr_ = ce; }
 
-    cmm::info parent_namespace_id() const { return parent_namespace_id_; }
-    void set_parent_namespace_id(cmm::info id) { parent_namespace_id_ = id; }
+    constexpr cmm::info parent_namespace_id() const { return parent_namespace_id_; }
+    constexpr void set_parent_namespace_id(cmm::info id) { parent_namespace_id_ = id; }
 
-    void set_getter_thunk(VariableGetterFn fn) { getter_ = fn; }
-    void set_ref_getter_thunk(VariableRefGetterFn fn) { ref_getter_ = fn; }
-    void set_setter_thunk(VariableSetterFn fn) { setter_ = fn; }
+    constexpr void set_getter_thunk(VariableGetterFn fn) { getter_ = fn; }
+    constexpr void set_ref_getter_thunk(VariableRefGetterFn fn) { ref_getter_ = fn; }
+    constexpr void set_setter_thunk(VariableSetterFn fn) { setter_ = fn; }
 
 private:
     cmm::info type_id_{cmm::invalid_info};
